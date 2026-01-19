@@ -121,3 +121,73 @@ body {
 .btn-danger:hover {
   background-color: #c82333;
 }
+
+/* Tree view styles */
+.tree-view {
+  font-family: var(--font-geist-mono), 'Roboto Mono', monospace;
+  font-size: 14px;
+}
+
+.tree-node {
+  line-height: 1.4;
+}
+
+.tree-label {
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 2px 0;
+  transition: background-color 0.2s ease;
+}
+
+.tree-label:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tree-expandable {
+  color: var(--syntax-key);
+  font-weight: 600;
+}
+
+.tree-leaf {
+  color: var(--foreground);
+}
+
+.tree-arrow {
+  display: inline-block;
+  width: 16px;
+  color: var(--syntax-key);
+  transition: transform 0.2s ease;
+}
+
+.tree-key {
+  color: var(--syntax-key);
+}
+
+.tree-separator {
+  color: var(--foreground-muted);
+}
+
+.tree-type-indicator {
+  color: var(--foreground-muted);
+  margin-left: 4px;
+  font-weight: normal;
+}
+
+.tree-value-string {
+  color: var(--syntax-string);
+}
+
+.tree-value-number {
+  color: var(--syntax-number);
+}
+
+.tree-value-boolean {
+  color: var(--syntax-boolean);
+}
+
+.tree-value-null {
+  color: var(--foreground-muted);
+  font-style: italic;
+}

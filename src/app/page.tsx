@@ -3,6 +3,7 @@
 import { useState } from "react";
 import TwoPanel from "@/components/TwoPanel";
 import JsonInput from "@/components/JsonInput";
+import TreeView from "@/components/TreeView";
 
 export default function Home() {
   const [parsedData, setParsedData] = useState<unknown>(null);
@@ -16,11 +17,11 @@ export default function Home() {
       leftPanel={
         <>
           <JsonInput onParse={handleParse} />
-          <div className="mt-4 text-foreground-muted">
+          <div className="mt-4">
             {parsedData ? (
-              <p className="text-sm text-success">JSON parsed successfully</p>
+              <TreeView data={parsedData} />
             ) : (
-              <p className="text-sm italic">Tree view placeholder</p>
+              <p className="text-sm italic text-foreground-muted">Parse JSON to see tree view</p>
             )}
           </div>
         </>
