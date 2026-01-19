@@ -4,36 +4,19 @@ import { useState, useRef } from "react";
 import TwoPanel from "@/components/TwoPanel";
 import JsonInput from "@/components/JsonInput";
 import TreeView from "@/components/TreeView";
+import ExpressionBuilder, { ExpressionBuilderRef } from "@/components/ExpressionBuilder";
 
 export default function Home() {
   const [parsedData, setParsedData] = useState<unknown>(null);
   const [expression, setExpression] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const expressionBuilderRef = useRef<ExpressionBuilderRef>(null);
 
   const handleParse = (data: unknown) => {
     setParsedData(data);
   };
 
   const handleExpressionGenerated = (expr: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      // Fallback: just append
-      setExpression((prev) => prev + expr);
-      return;
-    }
-
-    // Insert at cursor position
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const newValue = expression.slice(0, start) + expr + expression.slice(end);
-    setExpression(newValue);
-
-    // Move cursor after inserted expression
-    requestAnimationFrame(() => {
-      textarea.selectionStart = start + expr.length;
-      textarea.selectionEnd = start + expr.length;
-      textarea.focus();
-    });
+    expressionBuilderRef.current?.insertAtCursor(expr);
   };
 
   return (
@@ -56,12 +39,12 @@ export default function Home() {
       rightPanel={
         <>
           <h2 className="text-lg font-semibold mb-4 text-foreground">Jinja2 Expression Builder</h2>
-          <textarea
-            ref={textareaRef}
-            className="code-area w-full h-96 resize-none"
-            placeholder="Click tree nodes to build expression..."
+          <ExpressionBuilder
+            ref={expressionBuilderRef}
             value={expression}
-            onChange={(e) => setExpression(e.target.value)}
+            onChange={setExpression}
+            placeholder="Click tree nodes to build expression..."
+            className="w-full h-96 resize-none"
           />
           <div className="flex gap-2 mt-4">
             <button className="btn">Copy to Clipboard</button>
