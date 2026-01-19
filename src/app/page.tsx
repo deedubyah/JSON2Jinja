@@ -12,6 +12,7 @@ export default function Home() {
   const [expression, setExpression] = useState("");
   const [previewOutput, setPreviewOutput] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState(false);
   const expressionBuilderRef = useRef<ExpressionBuilderRef>(null);
 
   const handleParse = (data: unknown) => {
@@ -20,6 +21,18 @@ export default function Home() {
 
   const handleExpressionGenerated = (expr: string) => {
     expressionBuilderRef.current?.insertAtCursor(expr);
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(expression);
+      setCopyFeedback(true);
+      setTimeout(() => setCopyFeedback(false), 2000);
+    } catch {
+      // Fallback: show error in preview area
+      setPreviewOutput(null);
+      setPreviewError("Failed to copy to clipboard. Please copy manually.");
+    }
   };
 
   const handleTestTemplate = () => {
@@ -68,7 +81,9 @@ export default function Home() {
             className="w-full h-96 resize-none"
           />
           <div className="flex gap-2 mt-4">
-            <button className="btn">Copy to Clipboard</button>
+            <button className="btn" onClick={handleCopy}>
+              {copyFeedback ? "Copied!" : "Copy to Clipboard"}
+            </button>
             <button className="btn btn-success" onClick={handleTestTemplate}>
               Test Template
             </button>
