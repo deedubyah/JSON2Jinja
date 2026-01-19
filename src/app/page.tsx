@@ -1,21 +1,27 @@
+"use client";
+
+import { useState } from "react";
 import TwoPanel from "@/components/TwoPanel";
+import JsonInput from "@/components/JsonInput";
 
 export default function Home() {
+  const [parsedData, setParsedData] = useState<unknown>(null);
+
+  const handleParse = (data: unknown) => {
+    setParsedData(data);
+  };
+
   return (
     <TwoPanel
       leftPanel={
         <>
-          <h2 className="text-lg font-semibold mb-4 text-foreground">JSON Input</h2>
-          <textarea
-            className="code-area w-full h-48 resize-none"
-            placeholder="Paste your JSON here..."
-          />
-          <div className="mt-4">
-            <button className="btn">Parse JSON</button>
-          </div>
+          <JsonInput onParse={handleParse} />
           <div className="mt-4 text-foreground-muted">
-            {/* Tree view will be rendered here */}
-            <p className="text-sm italic">Tree view placeholder</p>
+            {parsedData ? (
+              <p className="text-sm text-success">JSON parsed successfully</p>
+            ) : (
+              <p className="text-sm italic">Tree view placeholder</p>
+            )}
           </div>
         </>
       }
