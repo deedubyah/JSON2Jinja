@@ -35,6 +35,16 @@ export default function Home() {
     }
   };
 
+  const handleReset = () => {
+    setExpression("");
+    setPreviewOutput(null);
+    setPreviewError(null);
+    setCopyFeedback(false);
+    requestAnimationFrame(() => {
+      expressionBuilderRef.current?.focus();
+    });
+  };
+
   const handleTestTemplate = () => {
     if (!parsedData) {
       setPreviewOutput(null);
@@ -87,7 +97,7 @@ export default function Home() {
             <button className="btn btn-success" onClick={handleTestTemplate}>
               Test Template
             </button>
-            <button className="btn btn-danger">Reset</button>
+            <button className="btn btn-danger" onClick={handleReset}>Reset</button>
           </div>
           <div className="mt-4">
             <div
