@@ -203,3 +203,22 @@ body {
   color: var(--foreground-muted);
   font-style: italic;
 }
+
+/* Preview area styles */
+.preview-area {
+  font-family: var(--font-geist-mono), 'Roboto Mono', monospace;
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.preview-area.preview-error {
+  border-color: var(--error);
+  background-color: rgba(255, 82, 82, 0.1);
+}
+
+.text-error {
+  color: var(--error);
+}

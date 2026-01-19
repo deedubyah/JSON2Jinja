@@ -5,10 +5,13 @@ import TwoPanel from "@/components/TwoPanel";
 import JsonInput from "@/components/JsonInput";
 import TreeView from "@/components/TreeView";
 import ExpressionBuilder, { ExpressionBuilderRef } from "@/components/ExpressionBuilder";
+import { renderTemplate } from "@/lib/templateRenderer";
 
 export default function Home() {
   const [parsedData, setParsedData] = useState<unknown>(null);
   const [expression, setExpression] = useState("");
+  const [previewOutput, setPreviewOutput] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const expressionBuilderRef = useRef<ExpressionBuilderRef>(null);
 
   const handleParse = (data: unknown) => {
@@ -17,6 +20,24 @@ export default function Home() {
 
   const handleExpressionGenerated = (expr: string) => {
     expressionBuilderRef.current?.insertAtCursor(expr);
+  };
+
+  const handleTestTemplate = () => {
+    if (!parsedData) {
+      setPreviewOutput(null);
+      setPreviewError("No JSON data parsed. Please parse JSON first.");
+      return;
+    }
+
+    const result = renderTemplate(expression, parsedData);
+
+    if (result.success) {
+      setPreviewOutput(result.output ?? "");
+      setPreviewError(null);
+    } else {
+      setPreviewOutput(null);
+      setPreviewError(result.error ?? "Unknown error");
+    }
   };
 
   return (
@@ -48,13 +69,26 @@ export default function Home() {
           />
           <div className="flex gap-2 mt-4">
             <button className="btn">Copy to Clipboard</button>
-            <button className="btn btn-success">Test Template</button>
+            <button className="btn btn-success" onClick={handleTestTemplate}>
+              Test Template
+            </button>
             <button className="btn btn-danger">Reset</button>
           </div>
           <div className="mt-4">
-            <div className="code-area w-full h-48 bg-surface-elevated">
-              {/* Preview output will be rendered here */}
-              <p className="text-sm italic text-foreground-muted">Preview placeholder</p>
+            <div
+              className={`preview-area w-full h-48 overflow-auto ${
+                previewError ? "preview-error" : ""
+              }`}
+            >
+              {previewError ? (
+                <span className="text-error">{previewError}</span>
+              ) : previewOutput !== null ? (
+                <pre className="whitespace-pre-wrap">{previewOutput}</pre>
+              ) : (
+                <p className="text-sm italic text-foreground-muted">
+                  Click &quot;Test Template&quot; to preview rendered output
+                </p>
+              )}
             </div>
           </div>
         </>
