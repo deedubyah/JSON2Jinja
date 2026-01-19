@@ -5,10 +5,10 @@ This file provides Claude Code with essential context about this project.
 ## Statement of Intent
 
 **What This Project Does**:
-JSON2Jinja is a web application that takes arbitrary JSON payloads, renders them as a browsable tree, allows users to select items from the JSON, converts the JSON representation to a Jinja template representation, and provides preview functionality. This is a migration/modernization project - moving the existing Namecheap-hosted app to a more stable AWS Lambda + GitHub Pages architecture.
+JSON2Jinja is a web application that takes arbitrary JSON payloads, renders them as a browsable tree, allows users to select items from the JSON, converts the JSON representation to a Jinja template representation, and provides preview functionality. This is a complete ground-up rewrite using Next.js deployed to Netlify with git push auto-deploy.
 
 **Why We're Using the Agentic Framework**:
-We're using the Agentic Workflow Framework to maintain consistent development practices during this migration, leverage PM/Engineer workflows for task breakdown, and ensure the transition from Namecheap to AWS/GitHub Pages is well-planned and executed with built-in checkpoints.
+We're using the Agentic Workflow Framework to maintain consistent development practices during this rewrite, leverage PM/Engineer workflows for task breakdown, and ensure quality with built-in checkpoints.
 
 **Project Status**:
 - 🟢 Active Development
@@ -21,34 +21,47 @@ We're using the Agentic Workflow Framework to maintain consistent development pr
 
 ## Tech Stack
 
-- **Frontend**: HTML/CSS/JavaScript (static site for GitHub Pages)
-- **Backend**: AWS Lambda (Python) for processing logic
-- **Storage**: AWS S3 (if needed for state/assets)
-- **Infrastructure**: AWS CDK / CloudFormation, GitHub Pages
-- **Testing**: pytest (Lambda), Jest/Playwright (frontend if applicable)
-- **CI/CD**: GitHub Actions
+- **Framework**: Next.js 16+ with App Router
+- **Language**: TypeScript (strict mode)
+- **Styling**: Tailwind CSS 4
+- **Templating**: Nunjucks (JavaScript Jinja2 port)
+- **Hosting**: Netlify (git push auto-deploy)
+- **Testing**: Jest/Vitest, React Testing Library
+- **Linting**: ESLint with Next.js config
 
 ## Project Structure
 
 ```
 JSON2Jinja/
-├── existing_project_archive/   # Current Namecheap-hosted app (reference)
-├── frontend/                   # GitHub Pages static site
-│   ├── index.html
-│   ├── css/
-│   ├── js/
-│   └── assets/
-├── backend/                    # AWS Lambda functions
-│   ├── src/
-│   │   └── handlers/
-│   ├── tests/
-│   └── requirements.txt
-├── infrastructure/             # AWS CDK/CloudFormation
-│   ├── template.yaml          # SAM template
-│   └── cdk/                   # Or CDK if preferred
-├── docs/
-│   └── agent_guidelines/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── layout.tsx          # Root layout with providers
+│   │   ├── page.tsx            # Main page component
+│   │   ├── globals.css         # Global styles (dark theme)
+│   │   └── api/
+│   │       └── render/
+│   │           └── route.ts    # POST /api/render endpoint
+│   ├── components/             # React components
+│   │   ├── layout/             # Layout components
+│   │   ├── json/               # JSON input components
+│   │   ├── tree/               # Tree view components
+│   │   ├── expression/         # Expression builder components
+│   │   └── preview/            # Preview components
+│   ├── context/                # React context providers
+│   ├── lib/                    # Utility functions
+│   │   ├── renderTemplate.ts   # Nunjucks wrapper
+│   │   ├── jsonPath.ts         # Path-to-expression utilities
+│   │   └── urlMasker.ts        # URL detection/masking
+│   └── types/                  # TypeScript type definitions
+├── public/                     # Static assets
+├── docs/                       # Project documentation
+│   └── REQUIREMENTS.md         # Full requirements spec
+├── existing_project_archive/   # Original Flask app (reference only)
 ├── CLAUDE.md                   # This file
+├── package.json
+├── tsconfig.json
+├── next.config.ts
+├── netlify.toml                # Netlify deployment config
 └── README.md
 ```
 
@@ -56,31 +69,29 @@ JSON2Jinja/
 
 ```bash
 # Development
-# Frontend: Open index.html in browser or use local server
-python -m http.server 8000 --directory frontend/
+npm run dev                              # Start dev server on localhost:3000
+
+# Build & Production
+npm run build                            # Create production build
+npm run start                            # Start production server locally
 
 # Testing
-pytest backend/tests/                    # Backend tests
-# sam local invoke                       # Test Lambda locally
+npm test                                 # Run tests
+npm run test:coverage                    # Run tests with coverage
 
 # Code Quality
-ruff check backend/                      # Python linting
-ruff format backend/                     # Python formatting
+npm run lint                             # Run ESLint
 
-# Deployment (you prefer running sam yourself)
-# sam build && sam deploy               # Deploy to AWS
+# Type Checking
+npx tsc --noEmit                         # Run TypeScript compiler
 
 # Installation
-pip install -e "backend/[dev]"          # Backend deps
+npm install                              # Install dependencies
 ```
 
 ## Environment Variables
 
-Required environment variables (for Lambda):
-
-- `LOG_LEVEL` - Logging verbosity (default: INFO)
-
-See `.env.example` for template (create if needed).
+No environment variables required - the application is entirely stateless and self-contained.
 
 ## Framework Integration
 
@@ -138,18 +149,20 @@ Use `/work_task <TASK_ID>` to implement tasks following the 5-phase workflow:
 
 **JSON2Jinja Patterns**:
 - Reference existing_project_archive/ for current functionality to preserve
-- Keep frontend static (GitHub Pages compatible - no server-side processing)
-- Lambda functions should be stateless and focused
+- Use React Context for state management (parsedJson, expressionText, preview)
+- Nunjucks for template rendering (server-side in API route)
+- Dark theme with two-panel layout
 
 **Testing Patterns**:
 - TDD: Write tests before implementation when possible
 - Coverage target: >80%
-- Test types: unit (Lambda logic), integration (API Gateway + Lambda)
+- Test types: unit (utilities), component (React Testing Library), integration (user flows)
 
 **Code Organization**:
-- Frontend: Vanilla JS preferred (minimal dependencies for GitHub Pages)
-- Backend: Python handlers with clear separation of concerns
-- Infrastructure: SAM or CDK templates in infrastructure/
+- Components in src/components/ organized by feature
+- Utilities in src/lib/ as pure functions
+- Types in src/types/ for shared TypeScript interfaces
+- Single API route for template rendering: /api/render
 
 ## MCP Tools Available
 
@@ -195,40 +208,40 @@ Lite mode - documentation handled manually as needed.
 
 ### Domain-Specific MCPs
 
-**Active**:
-- `AWS MCP` - For AWS infrastructure operations (Lambda, S3, API Gateway)
+**Active**: None required - Netlify deployment is handled via git push
 
 ---
 
 ### Languages & Tooling
 
-**Primary Language**: Python 3.11+ (Lambda), JavaScript (Frontend)
+**Primary Language**: TypeScript 5+
 
-**Framework/Runtime**: AWS Lambda, Static HTML/JS (GitHub Pages)
+**Framework/Runtime**: Next.js 16+ with App Router, Node.js 20+
 
 **Key Libraries**:
-- Jinja2: Template rendering (if used in Lambda)
-- boto3: AWS SDK for Python
+- React 19: UI framework
+- Nunjucks: Template rendering (Jinja2-compatible)
+- Tailwind CSS: Styling
 
 ---
 
 ### Test Commands
 
-**Unit Tests**: `pytest backend/tests/unit/`
+**Unit Tests**: `npm test -- --testPathPattern=unit`
 
-**Integration Tests**: `pytest backend/tests/integration/`
+**Integration Tests**: `npm test -- --testPathPattern=integration`
 
-**All Tests**: `pytest backend/tests/`
+**All Tests**: `npm test`
 
-**Coverage**: `pytest --cov=backend/src --cov-report=html backend/tests/`
+**Coverage**: `npm run test:coverage`
 
 ---
 
 ### Lint & Format Tools
 
-**Linter**: `ruff check backend/`
+**Linter**: `npm run lint`
 
-**Formatter**: `ruff format backend/`
+**Type Check**: `npx tsc --noEmit`
 
 ---
 
@@ -257,76 +270,91 @@ Never skip these checkpoints. They ensure quality and alignment.
 ### Architecture
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  GitHub Pages   │────▶│  API Gateway    │────▶│  AWS Lambda     │
-│  (Static Site)  │     │                 │     │  (Python)       │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                                               │
-        │                                               ▼
-        │                                       ┌─────────────────┐
-        │                                       │  S3 (optional)  │
-        │                                       │  (assets/state) │
-        └───────────────────────────────────────└─────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                         Netlify                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────────┐     ┌─────────────────────────────┐   │
+│  │   Static Pages  │     │   Serverless Functions      │   │
+│  │   (Next.js SSG) │────▶│   (/api/render)             │   │
+│  │                 │     │   - Nunjucks rendering      │   │
+│  └─────────────────┘     └─────────────────────────────┘   │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+         │
+         │ git push
+         ▼
+┌─────────────────┐
+│     GitHub      │
+│   Repository    │
+└─────────────────┘
 ```
 
 **Key Design Decisions**:
-- Frontend is purely static (GitHub Pages compatible)
-- All dynamic processing happens in Lambda
-- API Gateway provides REST endpoint for frontend to call
-- No server-side rendering on the frontend
+- Stateless architecture - no server-side session storage
+- Single API route `/api/render` for Nunjucks template rendering
+- React Context for client-side state management
+- Git push auto-deploy to Netlify
+- Dark theme, two-panel layout matching existing app
 
-### Migration from Namecheap
+### Reference Implementation
 
-The `existing_project_archive/` directory contains the current implementation. Key migration considerations:
-- Identify which logic currently runs server-side on Namecheap
-- Move that logic to AWS Lambda
-- Keep frontend static and deployable to GitHub Pages
-- Ensure feature parity with existing app
+The `existing_project_archive/` directory contains the original Flask implementation for reference:
+- Review for feature parity
+- Understand existing UX patterns
+- DO NOT modify - read-only reference
 
 ## Testing Strategy
 
 ### Test Types
 
-1. **Unit Tests** (`backend/tests/unit/`)
-   - Test Lambda handler logic in isolation
-   - Mock AWS services
+1. **Unit Tests** (`src/**/*.test.ts`)
+   - Test utility functions (jsonPath, urlMasker, etc.)
+   - Pure function testing with Jest/Vitest
    - Fast, focused tests
 
-2. **Integration Tests** (`backend/tests/integration/`)
-   - Test Lambda with real/mocked API Gateway events
-   - May use LocalStack or SAM local
+2. **Component Tests** (`src/**/*.test.tsx`)
+   - Test React components with React Testing Library
+   - Render, interact, assert
+   - Mock context providers as needed
+
+3. **Integration Tests** (`__tests__/integration/`)
+   - Test full user flows (paste JSON → click tree → preview)
+   - E2E-style testing of component interactions
 
 ### Coverage Requirements
 
 - Minimum coverage: 80%
-- Focus: All happy paths + critical error cases
-- How to check: `pytest --cov=backend/src backend/tests/`
+- Focus: All acceptance criteria from REQUIREMENTS.md
+- How to check: `npm run test:coverage`
 
 ## Success Criteria
 
 **Project Goals**:
-- ✅ Feature parity with existing Namecheap app
-- ✅ Static frontend deployable to GitHub Pages
-- ✅ Backend processing via AWS Lambda
-- ✅ Improved reliability (no more Namecheap update breakages)
-- ✅ Clear separation of concerns
+- ✅ Feature parity with existing Flask app
+- ✅ NEW: Array expression support (`{{ items }}` not `{{ items[0] }}`)
+- ✅ Git push auto-deploy to Netlify
+- ✅ Improved reliability (stateless, no hosting dependencies)
+- ✅ Modern, maintainable codebase
 
 **Quality Metrics**:
 - Test coverage: >80%
-- Lighthouse score: >90 (frontend)
-- Lambda cold start: <1s
+- JSON parse: <500ms for 1MB payload
+- Tree render: <1s for 1000 nodes
+- UI response: <100ms
 
 ## Additional Resources
 
 **Agentic Framework Resources**:
 - Framework docs: `~/.agentic-framework/docs/agent_guidelines/`
 - Linear helper: `~/.agentic-framework/scripts/linear_helpers.md`
-- MCP tools reference: `~/.agentic-framework/tools.md`
 
 **Project-Specific Resources**:
-- existing_project_archive/ - Current implementation reference
-- AWS Lambda docs: https://docs.aws.amazon.com/lambda/
-- GitHub Pages docs: https://pages.github.com/
+- existing_project_archive/ - Original Flask implementation (reference only)
+- docs/REQUIREMENTS.md - Full requirements specification
+- Next.js docs: https://nextjs.org/docs
+- Nunjucks docs: https://mozilla.github.io/nunjucks/
+- Netlify docs: https://docs.netlify.com/
 
 ## Quick Start for New Developers
 
@@ -334,32 +362,34 @@ The `existing_project_archive/` directory contains the current implementation. K
    ```bash
    git clone [repository-url]
    cd JSON2Jinja
+   npm install
    ```
 
-2. **Review existing implementation**:
+2. **Review existing implementation** (for reference):
    ```bash
    ls existing_project_archive/
-   # Understand current functionality before migrating
+   # Understand current functionality
    ```
 
-3. **Install backend dependencies**:
+3. **Start development server**:
    ```bash
-   cd backend
-   pip install -e ".[dev]"
+   npm run dev
+   # Open http://localhost:3000
    ```
 
 4. **Run tests**:
    ```bash
-   pytest backend/tests/
+   npm test
    ```
 
-5. **Start frontend locally**:
+5. **Build for production**:
    ```bash
-   python -m http.server 8000 --directory frontend/
+   npm run build
    ```
 
 6. **First task**:
    - Review this CLAUDE.md file
+   - Read docs/REQUIREMENTS.md
    - Run `/context_prime` to load agent guidelines
    - Check Linear for assigned tasks
    - Use `/work_task <ID>` to start your first task
@@ -368,13 +398,13 @@ The `existing_project_archive/` directory contains the current implementation. K
 
 **Important Notes**:
 - The existing_project_archive/ is READ-ONLY reference - don't modify it
-- You prefer running sam yourself - Claude should prepare templates but not auto-deploy
-- GitHub Pages has limitations - no server-side code, be mindful of CORS
+- Netlify deployment is automatic on git push to main
+- Use Nunjucks (not Jinja2) - they're 99% compatible
 
-**Migration Gotchas**:
-- CORS must be configured on API Gateway for GitHub Pages to call Lambda
-- Secrets (if any) must use AWS Secrets Manager, not environment files
-- Static assets may need to be served from S3 with CloudFront for performance
+**Key Differences from Original App**:
+- Stateless design - no global server state like Flask's `current_data`
+- Array expressions: clicking arrays outputs `{{ items }}` (full reference)
+- Server-side template rendering via Next.js API route
 
 ---
 

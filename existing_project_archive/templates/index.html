@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to Jinja2 Expression Builder</title>
+    <link rel="stylesheet" href="/j2j/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h2>JSON Input</h2>
+            <textarea id="jsonInput" class="json-input" placeholder="Paste your JSON here..."></textarea>
+            <button onclick="parseJSON()">Parse JSON</button>
+            <div id="error" class="error"></div>
+            <div id="treeView"></div>
+        </div>
+        <div class="panel">
+            <h2>Jinja2 Expression Builder</h2>
+            <textarea id="expressionOutput" class="expression-output" placeholder="Click tree nodes to build expression..."></textarea>
+            <div class="button-group">
+                <button onclick="copyToClipboard()">Copy to Clipboard</button>
+                <button class="secondary" onclick="testTemplate()">Test Template</button>
+                <button class="secondary" onclick="resetExpression()" style="background-color: #dc3545;">Reset</button>
+            </div>
+            <div id="previewError" class="error"></div>
+            <div id="previewOutput" class="preview-output"></div>
+        </div>
+    </div>
+
+    <script>
+		function parseJSON() {
+			const jsonInput = document.getElementById('jsonInput').value;
+			const errorDiv = document.getElementById('error');
+			const treeView = document.getElementById('treeView');
+			try {
+				const data = JSON.parse(jsonInput);
+				errorDiv.textContent = '';
+				treeView.innerHTML = '';
+				renderTree(data, treeView, []);
+				fetch('/j2j/parse_json', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: jsonInput
+				});
+			} catch (e) {
+				errorDiv.textContent = 'Invalid JSON: ' + e.message;
+				treeView.innerHTML = '';
+			}
+		}
+
+		function renderTree(obj, parent, path) {
+			for (const key in obj) {
+				const value = obj[key];
+				const nodeDiv = document.createElement('div');
+				nodeDiv.className = 'tree-node';
+				const label = document.createElement('span');
+				label.className = 'tree-label';
+				label.textContent = key;
+				const currentPath = [...path, key];
+				if (typeof value === 'object' && value !== null) {
+					label.classList.add('expandable');
+					label.onclick = (e) => {
+						e.stopPropagation();
+						toggleNode(nodeDiv, label);
+					};
+					nodeDiv.appendChild(label);
+					renderTree(value, nodeDiv, currentPath);
+				} else {
+					// Check if the value is a URL and replace it
+					let displayValue = value;
+					const isURL = typeof value === 'string' && 
+						(value.startsWith('http://') || value.startsWith('https://'));
+					
+					if (isURL) {
+						displayValue = "—>URL-HERE←--";
+					}
+					
+					label.textContent += `: ${displayValue}`;
+					label.onclick = (e) => {
+						e.stopPropagation();
+						insertJinjaExpression(currentPath);
+					};
+					nodeDiv.appendChild(label);
+				}
+				// Show top-level nodes by default
+				if (path.length === 0) {
+					nodeDiv.style.display = 'block';
+				}
+				parent.appendChild(nodeDiv);
+			}
+		}
+
+        function toggleNode(nodeDiv, label) {
+            const children = Array.from(nodeDiv.children).slice(1); // Skip the label itself
+            const isExpanded = label.classList.contains('expanded');
+            
+            if (isExpanded) {
+                // Collapse this node and all its children
+                label.classList.remove('expanded');
+                children.forEach(child => {
+                    child.classList.remove('expanded');
+                    child.style.display = 'none';
+                    
+                    // Collapse all child expandable nodes
+                    const expandableLabels = child.getElementsByClassName('expandable');
+                    Array.from(expandableLabels).forEach(label => {
+                        label.classList.remove('expanded');
+                    });
+                });
+            } else {
+                // Expand only this node's immediate children
+                label.classList.add('expanded');
+                children.forEach(child => {
+                    child.style.display = 'block';
+                });
+            }
+        }
+
+        function insertJinjaExpression(path) {
+            const output = document.getElementById('expressionOutput');
+            const expression = '{{"{{" }} ' + path.join('.') + ' {{"}}"}}'
+            
+            // Get cursor position
+            const start = output.selectionStart;
+            const end = output.selectionEnd;
+            
+            // Insert expression at cursor position
+            output.value = output.value.substring(0, start) + 
+                          expression + 
+                          output.value.substring(end);
+            
+            // Move cursor after inserted expression
+            output.selectionStart = start + expression.length;
+            output.selectionEnd = start + expression.length;
+            
+            output.focus();
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('expressionOutput');
+            output.select();
+            document.execCommand('copy');
+            
+            // Optional: Visual feedback
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 1000);
+        }
+
+        function testTemplate() {
+            const template = document.getElementById('expressionOutput').value;
+            const previewError = document.getElementById('previewError');
+            const previewOutput = document.getElementById('previewOutput');
+            
+            fetch('/j2j/test_template', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    template: template
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    previewError.textContent = '';
+                    previewOutput.textContent = data.result;
+                } else {
+                    previewError.textContent = 'Template Error: ' + data.error;
+                    previewOutput.textContent = '';
+                }
+            })
+            .catch(error => {
+                previewError.textContent = 'Error: ' + error;
+                previewOutput.textContent = '';
+            });
+        }
+
+        function resetExpression() {
+            const output = document.getElementById('expressionOutput');
+            output.value = '';
+            output.focus();
+            
+            // Also clear the preview area and any errors
+            document.getElementById('previewError').textContent = '';
+            document.getElementById('previewOutput').textContent = '';
+        }
+    </script>
+</body>
+</html>
