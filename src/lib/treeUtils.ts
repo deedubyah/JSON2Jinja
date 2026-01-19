@@ -81,3 +81,14 @@ export function jsonToTree(
 export function isExpandable(type: NodeType): boolean {
   return type === NodeType.Object || type === NodeType.Array;
 }
+
+/**
+ * Converts a path to a Jinja2 expression with proper spacing
+ * Example: "user.address.city" -> "{{ user.address.city }}"
+ */
+export function pathToExpression(path: string): string {
+  if (!path) {
+    return "";
+  }
+  return `{{ ${path} }}`;
+}

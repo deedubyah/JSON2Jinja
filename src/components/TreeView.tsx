@@ -7,10 +7,10 @@ import TreeNode from "./TreeNode";
 
 interface TreeViewProps {
   data: unknown;
-  onNodeClick?: (path: string) => void;
+  onExpressionGenerated?: (expression: string) => void;
 }
 
-export default function TreeView({ data, onNodeClick }: TreeViewProps) {
+export default function TreeView({ data, onExpressionGenerated }: TreeViewProps) {
   const tree = useMemo(() => {
     if (data === null || data === undefined) {
       return null;
@@ -40,7 +40,7 @@ export default function TreeView({ data, onNodeClick }: TreeViewProps) {
             key={`${child.key}-${index}`}
             node={child}
             depth={0}
-            onNodeClick={onNodeClick}
+            onExpressionGenerated={onExpressionGenerated}
           />
         ))}
       </div>
@@ -50,7 +50,7 @@ export default function TreeView({ data, onNodeClick }: TreeViewProps) {
   // Single primitive value at root
   return (
     <div className="tree-view">
-      <TreeNode node={tree} depth={0} onNodeClick={onNodeClick} />
+      <TreeNode node={tree} depth={0} onExpressionGenerated={onExpressionGenerated} />
     </div>
   );
 }

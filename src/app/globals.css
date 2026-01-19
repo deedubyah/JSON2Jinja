@@ -133,16 +133,10 @@ body {
 }
 
 .tree-label {
-  cursor: pointer;
   padding: 2px 5px;
   border-radius: 3px;
   display: inline-block;
   margin: 2px 0;
-  transition: background-color 0.2s ease;
-}
-
-.tree-label:hover {
-  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .tree-expandable {
@@ -158,7 +152,25 @@ body {
   display: inline-block;
   width: 16px;
   color: var(--syntax-key);
-  transition: transform 0.2s ease;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.tree-arrow:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tree-label-text {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.tree-label-text:hover {
+  background-color: rgba(74, 110, 169, 0.2);
 }
 
 .tree-key {

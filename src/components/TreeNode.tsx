@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { TreeNode as TreeNodeType, NodeType } from "@/types/tree";
-import { isExpandable } from "@/lib/treeUtils";
+import { isExpandable, pathToExpression } from "@/lib/treeUtils";
 
 interface TreeNodeProps {
   node: TreeNodeType;
   depth: number;
-  onNodeClick?: (path: string) => void;
+  onExpressionGenerated?: (expression: string) => void;
 }
 
 function getValueClassName(type: NodeType): string {
@@ -43,7 +43,7 @@ function formatValue(value: unknown, type: NodeType): string {
   return String(value);
 }
 
-export default function TreeNode({ node, depth, onNodeClick }: TreeNodeProps) {
+export default function TreeNode({ node, depth, onExpressionGenerated }: TreeNodeProps) {
   // Top-level nodes (depth 0) are expanded by default, others collapsed
   const [expanded, setExpanded] = useState(depth === 0);
   // Key to force remount of children when collapsing (resets their state)
@@ -52,18 +52,22 @@ export default function TreeNode({ node, depth, onNodeClick }: TreeNodeProps) {
   const expandable = isExpandable(node.type);
   const hasChildren = node.children && node.children.length > 0;
 
-  const handleClick = (e: React.MouseEvent) => {
+  // Handle arrow click - expand/collapse only
+  const handleArrowClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (expanded) {
+      // Collapsing: increment key to reset all children
+      setCollapseKey((k) => k + 1);
+    }
+    setExpanded(!expanded);
+  };
 
-    if (expandable && hasChildren) {
-      if (expanded) {
-        // Collapsing: increment key to reset all children
-        setCollapseKey((k) => k + 1);
-      }
-      setExpanded(!expanded);
-    } else if (onNodeClick && node.path) {
-      // Leaf node: trigger path insertion
-      onNodeClick(node.path);
+  // Handle label click - generate expression
+  const handleLabelClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onExpressionGenerated && node.path) {
+      const expression = pathToExpression(node.path);
+      onExpressionGenerated(expression);
     }
   };
 
@@ -95,10 +99,23 @@ export default function TreeNode({ node, depth, onNodeClick }: TreeNodeProps) {
     <div className="tree-node" style={{ marginLeft: depth > 0 ? 20 : 0 }}>
       <span
         className={`tree-label ${expandable ? "tree-expandable" : "tree-leaf"} ${expanded ? "expanded" : ""}`}
-        onClick={handleClick}
       >
-        {expandable && <span className="tree-arrow">{expanded ? "▼" : "►"}</span>}
-        {renderLabel()}
+        {expandable && (
+          <span
+            className="tree-arrow"
+            onClick={handleArrowClick}
+            title="Click to expand/collapse"
+          >
+            {expanded ? "▼" : "►"}
+          </span>
+        )}
+        <span
+          className="tree-label-text"
+          onClick={handleLabelClick}
+          title={node.path ? `Click to insert {{ ${node.path} }}` : undefined}
+        >
+          {renderLabel()}
+        </span>
       </span>
 
       {expandable && expanded && hasChildren && (
@@ -108,7 +125,7 @@ export default function TreeNode({ node, depth, onNodeClick }: TreeNodeProps) {
               key={`${child.key}-${collapseKey}-${index}`}
               node={child}
               depth={depth + 1}
-              onNodeClick={onNodeClick}
+              onExpressionGenerated={onExpressionGenerated}
             />
           ))}
         </div>
