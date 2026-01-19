@@ -159,12 +159,27 @@ describe("jsonToTree", () => {
     expect(tree.children?.[1].children?.[0].path).toBe("[1].id");
   });
 
-  it("handles special characters in keys", () => {
+  it("handles special characters in keys with bracket notation", () => {
     const data = { "my-key": "value", "another.key": "value2" };
     const tree = jsonToTree(data);
 
     expect(tree.children?.[0].key).toBe("my-key");
-    expect(tree.children?.[0].path).toBe("my-key");
+    expect(tree.children?.[0].path).toBe('["my-key"]');
+    expect(tree.children?.[1].key).toBe("another.key");
+    expect(tree.children?.[1].path).toBe('["another.key"]');
+  });
+
+  it("handles numeric string keys with bracket notation", () => {
+    const data = { "4": { class_type: "KSampler" } };
+    const tree = jsonToTree(data);
+
+    const node4 = tree.children?.[0];
+    expect(node4?.key).toBe("4");
+    expect(node4?.path).toBe('["4"]');
+
+    const classType = node4?.children?.[0];
+    expect(classType?.key).toBe("class_type");
+    expect(classType?.path).toBe('["4"].class_type');
   });
 });
 

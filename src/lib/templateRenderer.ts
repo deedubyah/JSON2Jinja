@@ -13,8 +13,28 @@ const env = new nunjucks.Environment(null, {
 });
 
 /**
+ * Transforms bracket-notation expressions to use data prefix.
+ * Only transforms expressions starting with [ like {{ ["3"].foo }}
+ * Other expressions work via spreading context at root level.
+ */
+function transformBracketExpressions(template: string): string {
+  // Transform {{ ["key"]... }} to {{ data["key"]... }}
+  return template.replace(
+    /\{\{\s*\[/g,
+    '{{ data['
+  ).replace(
+    /\{%\s*for\s+(\w+)\s+in\s*\[/g,
+    '{% for $1 in data['
+  ).replace(
+    /\{%\s*if\s*\[/g,
+    '{% if data['
+  );
+}
+
+/**
  * Renders a Nunjucks/Jinja2 template string against provided context data.
- * Returns a result object with either the rendered output or an error message.
+ * Context is spread at root level for normal access, and also available
+ * under "data" for bracket-notation expressions like {{ data["3"].foo }}.
  */
 export function renderTemplate(
   template: string,
@@ -28,7 +48,12 @@ export function renderTemplate(
   }
 
   try {
-    const output = env.renderString(template, context as object);
+    // Transform bracket expressions to use data prefix
+    const transformedTemplate = transformBracketExpressions(template);
+    // Spread context at root for normal access, add under "data" for bracket notation
+    const wrappedContext = { ...(context as object), data: context };
+
+    const output = env.renderString(transformedTemplate, wrappedContext);
     return {
       success: true,
       output,

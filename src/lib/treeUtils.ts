@@ -25,9 +25,21 @@ export function getNodeType(value: unknown): NodeType {
 }
 
 /**
+ * Checks if a key requires bracket notation in Jinja2
+ * Keys that start with a digit or contain special characters need bracket notation
+ */
+function requiresBracketNotation(key: string): boolean {
+  if (/^\d/.test(key)) return true;
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) return true;
+  return false;
+}
+
+/**
  * Builds a Jinja2 expression path segment
- * - Objects use dot notation: parent.key
  * - Arrays use bracket notation: parent[index]
+ * - Object keys starting with digit use bracket notation: parent["4"]
+ * - Object keys with special chars use bracket notation: parent["my-key"]
+ * - Regular object keys use dot notation: parent.key
  */
 export function buildPath(
   parentPath: string,
@@ -37,6 +49,14 @@ export function buildPath(
   if (isArrayIndex) {
     return `${parentPath}[${key}]`;
   }
+
+  if (requiresBracketNotation(key)) {
+    if (parentPath === "") {
+      return `["${key}"]`;
+    }
+    return `${parentPath}["${key}"]`;
+  }
+
   if (parentPath === "") {
     return key;
   }
