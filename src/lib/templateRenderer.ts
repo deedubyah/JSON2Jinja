@@ -12,6 +12,46 @@ const env = new nunjucks.Environment(null, {
   throwOnUndefined: true,
 });
 
+// Add custom 'json' filter for pretty-printing arrays and objects (kept for explicit use)
+env.addFilter("json", (value: unknown, indent?: number) => {
+  return JSON.stringify(value, null, indent ?? 2);
+});
+
+/**
+ * Wraps a value so arrays and objects automatically stringify to JSON.
+ * This makes preview output user-friendly without modifying the template.
+ */
+function wrapForPreview(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    // Create a custom array that stringifies to JSON
+    const wrapped = value.map(wrapForPreview);
+    Object.defineProperty(wrapped, "toString", {
+      value: () => JSON.stringify(value, null, 2),
+      enumerable: false,
+    });
+    return wrapped;
+  }
+
+  if (typeof value === "object") {
+    // Create a proxy that stringifies to JSON but allows property access
+    const wrappedObj: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      wrappedObj[key] = wrapForPreview(val);
+    }
+    Object.defineProperty(wrappedObj, "toString", {
+      value: () => JSON.stringify(value, null, 2),
+      enumerable: false,
+    });
+    return wrappedObj;
+  }
+
+  return value;
+}
+
 /**
  * Transforms bracket-notation expressions to use data prefix.
  * Only transforms expressions starting with [ like {{ ["3"].foo }}
@@ -50,8 +90,10 @@ export function renderTemplate(
   try {
     // Transform bracket expressions to use data prefix
     const transformedTemplate = transformBracketExpressions(template);
+    // Wrap context so arrays/objects stringify to JSON in preview
+    const previewContext = wrapForPreview(context);
     // Spread context at root for normal access, add under "data" for bracket notation
-    const wrappedContext = { ...(context as object), data: context };
+    const wrappedContext = { ...(previewContext as object), data: previewContext };
 
     const output = env.renderString(transformedTemplate, wrappedContext);
     return {

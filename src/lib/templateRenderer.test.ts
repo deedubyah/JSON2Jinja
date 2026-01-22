@@ -55,6 +55,85 @@ describe("renderTemplate", () => {
     });
   });
 
+  describe("automatic array/object formatting", () => {
+    it("formats array as JSON automatically", () => {
+      const result = renderTemplate("{{ items }}", { items: ["a", "b", "c"] });
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('[\n  "a",\n  "b",\n  "c"\n]');
+    });
+
+    it("formats object as JSON automatically", () => {
+      const result = renderTemplate("{{ user }}", { user: { name: "Alice" } });
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('{\n  "name": "Alice"\n}');
+    });
+
+    it("formats nested array of objects", () => {
+      const result = renderTemplate("{{ items }}", {
+        items: [{ id: 1 }, { id: 2 }]
+      });
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('"id": 1');
+      expect(result.output).toContain('"id": 2');
+    });
+
+    it("still allows property access on wrapped objects", () => {
+      const result = renderTemplate("{{ user.name }}", { user: { name: "Alice" } });
+      expect(result.success).toBe(true);
+      expect(result.output).toBe("Alice");
+    });
+
+    it("still allows index access on wrapped arrays", () => {
+      const result = renderTemplate("{{ items[0] }}", { items: ["first", "second"] });
+      expect(result.success).toBe(true);
+      expect(result.output).toBe("first");
+    });
+
+    it("still allows iteration on wrapped arrays", () => {
+      const result = renderTemplate(
+        "{% for item in items %}{{ item }},{% endfor %}",
+        { items: ["a", "b", "c"] }
+      );
+      expect(result.success).toBe(true);
+      expect(result.output).toBe("a,b,c,");
+    });
+  });
+
+  describe("json filter", () => {
+    it("formats array as JSON", () => {
+      const result = renderTemplate("{{ items | json }}", { items: ["a", "b", "c"] });
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('[\n  "a",\n  "b",\n  "c"\n]');
+    });
+
+    it("formats object as JSON", () => {
+      const result = renderTemplate("{{ user | json }}", { user: { name: "Alice", age: 30 } });
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('{\n  "name": "Alice",\n  "age": 30\n}');
+    });
+
+    it("formats array of objects as JSON", () => {
+      const result = renderTemplate("{{ items | json }}", {
+        items: [{ id: 1 }, { id: 2 }]
+      });
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('"id": 1');
+      expect(result.output).toContain('"id": 2');
+    });
+
+    it("accepts custom indentation", () => {
+      const result = renderTemplate("{{ items | json(0) }}", { items: ["a", "b"] });
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('["a","b"]');
+    });
+
+    it("formats primitive values", () => {
+      const result = renderTemplate("{{ value | json }}", { value: "test" });
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('"test"');
+    });
+  });
+
   describe("error handling", () => {
     it("returns error for empty template", () => {
       const result = renderTemplate("", { name: "test" });
